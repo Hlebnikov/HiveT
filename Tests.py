@@ -254,14 +254,25 @@ class TestFigureMethods(unittest.TestCase):
             toCoordsMoves += [move.to_coord]
         return toCoordsMoves
 
+    def test_count(self):
+        self.board.setFigure(self.board.figures[1], [0, 0])
+        self.board.setFigure(self.board.figures[3], [1, -1])
+        self.assertEqual(self.board.figuresOnBoard(), 2)
+        self.assertEqual(self.board.figuresOnBoard(Color.WHITE), 1)
+        self.assertEqual(self.board.figuresOnBoard(Color.BLACK), 1)
+
+        self.board.setFigure(self.board.figures[4], [1, -2])
+        self.board.setFigure(self.board.figures[5], [0, -2])
+        self.board.setFigure(self.board.figures[6], [-1, -1])
+
     def test_Moves(self):
         color = Color.WHITE
         for i in range(100):
             color = Color.WHITE if color == Color.BLACK else color.BLACK
             moves = self.board.getAllMoves(color)
-            if moves:
-                randMove = moves[int(rand.random() * len(moves))]
-            else: break
+            if not moves:
+                break
+            randMove = moves[int(rand.random() * len(moves))]
             self.board.doMove(randMove)
             self.assertTrue(self.board.isSolid())
             # self.board.print()

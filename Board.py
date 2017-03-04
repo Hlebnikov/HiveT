@@ -25,7 +25,11 @@ class Board:
                 print("|", end="")
                 figure = self.fields[i][j]
                 if isinstance(figure, Figure):
-                    print(figure.letter, end="")
+                    if figure.underBug:
+                        figure.printBug()
+                    else:
+                        print(figure.letter, end="")
+
                     if not figure.coord == [i - self.x0, j - self.y0]:
                         raise Exception("Figure {0} have wrong coord {1}. Expected {2}". format(figure, figure.coord, [i - self.x0, j - self.y0]))
                 else:
@@ -146,16 +150,16 @@ class Board:
 
     def queenOnBoard(self, color):
         if color == Color.WHITE:
-            return self.whiteQueen.coord
+            return self.whiteQueen.coord is not None
         else:
-            return self.blackQueen.coord
+            return self.blackQueen.coord is not None
 
     def figuresOnBoard(self, color=None):
         i = 0
         for figure in self.figures:
             if figure.coord and not figure.underBug:
                 if color:
-                    if figure == color:
+                    if figure.color == color:
                         i += 1
                 else:
                     i+=1

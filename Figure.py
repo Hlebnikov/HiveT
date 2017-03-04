@@ -25,7 +25,8 @@ adjacents = [[0, 1],
 
 class Figure:
     def __init__(self, letter, color):
-        if color == Color.WHITE: letter = letter.upper()
+        if color == Color.WHITE:
+            letter = letter.upper()
         self.color = color
         self.letter = letter
         self.coord = None
@@ -49,6 +50,12 @@ class Figure:
         while t.underBug:
             t = t.underBug
         t.underBug = None
+
+    def printBug(self):
+        t = self
+        while t.underBug:
+            t = t.underBug
+        print(t.letter, end="")
 
     def getMoves(self, board, onlySets = False):
         out = []
