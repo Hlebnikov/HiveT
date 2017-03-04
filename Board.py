@@ -110,11 +110,11 @@ class Board:
         # self.print()
 
         T = []
-        rightCount = 0
+        rightCount = self.figuresOnBoard()
         for f in self.figures:
-            if f.coord:
-                rightCount += 1
+            if f.coord and not f.underBug:
                 T = [f]
+                break
         # print("rightCount: {0}".format(rightCount))
         Q = set()
         i = 0
@@ -133,7 +133,7 @@ class Board:
                     Q.add(fig)
             T.pop(0)
             i += 1
-            # print()
+        #     print()
         # print("stoped")
         # print(rightCount, i)
         return rightCount == i

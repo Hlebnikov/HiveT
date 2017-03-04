@@ -11,10 +11,10 @@ class Game:
         figures = [self.whiteQueen, self.blackQueen]
         figures += [Ant(Color.WHITE), Ant(Color.WHITE), Ant(Color.WHITE),
                     Ant(Color.BLACK), Ant(Color.BLACK), Ant(Color.BLACK)]
-        figures += [Grasshoper(Color.WHITE), Grasshoper(Color.WHITE), Grasshoper(Color.WHITE),
-                    Grasshoper(Color.BLACK), Grasshoper(Color.BLACK), Grasshoper(Color.BLACK)]
-        figures += [Spider(Color.WHITE), Spider(Color.WHITE),
-                    Spider(Color.BLACK), Spider(Color.BLACK)]
+        # figures += [Grasshoper(Color.WHITE), Grasshoper(Color.WHITE), Grasshoper(Color.WHITE),
+        #             Grasshoper(Color.BLACK), Grasshoper(Color.BLACK), Grasshoper(Color.BLACK)]
+        # figures += [Spider(Color.WHITE), Spider(Color.WHITE),
+        #             Spider(Color.BLACK), Spider(Color.BLACK)]
         figures += [Bug(Color.WHITE), Bug(Color.WHITE),
                     Bug(Color.BLACK), Bug(Color.BLACK)]
         self.desk = Board(figures)
@@ -39,7 +39,7 @@ class Game:
             # for move in moves:
             #     move.print()
             randMove = moves[int(rand.random() * len(moves))]
-            # randMove.print()
+            randMove.print()
             self.desk.doMove(randMove)
             self.steps += 1
 
@@ -47,6 +47,7 @@ class Game:
 
             if not self.desk.isSolid():
                 self.desk.print()
+                print(self.desk.figuresOnBoard())
                 raise Exception("Hive not solid!")
 
             if self.steps > 200:
@@ -63,13 +64,12 @@ class Game:
 
 
 if __name__ == "__main__":
-    loss = 0
-    for i in range(1000):
-        game = Game()
-        try:
-            game.start()
-            print("Winner: {0}".format(game.winner))
-        except Exception as e:
-            print(str(e))
-            loss += 1
-    print("Неудачных ", i)
+    # loss = 0
+    game = Game()
+    try:
+        game.start()
+        print("Winner: {0}".format(game.winner))
+    except Exception as e:
+        print(str(e))
+        # loss += 1
+    # print("Неудачных ", i)

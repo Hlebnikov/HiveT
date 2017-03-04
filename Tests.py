@@ -67,14 +67,22 @@ class TestFigureMethods(unittest.TestCase):
         self.assertTrue(self.board.isSolid())
 
     def test_solid2(self):
-        self.board.setFigure(self.board.figures[0], [-3, 2])
-        self.board.setFigure(self.board.figures[1], [-2, 2])
-        self.board.setFigure(self.board.figures[2], [-2, 1])
-        self.board.setFigure(self.board.figures[3], [-1, 0])
-        self.board.setFigure(self.board.figures[4], [-1, -1])
-        self.board.setFigure(self.board.figures[5], [0, 0])
-        self.board.setFigure(self.board.figures[6], [1, 0])
-        self.board.setFigure(self.board.figures[7], [2, -1])
+
+        self.board.doMove(Move(self.board.figures[2], [0, 0]))
+        self.board.doMove(Move(self.board.figures[5], [1, -1]))
+        self.board.doMove(Move(self.board.figures[0], [-1, 0]))
+        self.board.doMove(Move(self.board.figures[1], [2, -1]))
+        self.board.doMove(Move(self.board.figures[3], [-2, 1]))
+        self.board.doMove(Move(self.board.figures[20], [3, -1]))
+        self.board.doMove(Move(self.board.figures[3], [1, -2]))
+        self.board.doMove(Move(self.board.figures[6], [4, -2]))
+        self.board.doMove(Move(self.board.figures[3], [-1, -1]))
+        self.board.doMove(Move(self.board.figures[6], [4, -1]))
+        self.board.doMove(Move(self.board.figures[18], [-1, -2]))
+        self.board.doMove(Move(self.board.figures[6], [3, 0]))
+        self.board.doMove(Move(self.board.figures[19], [0, -3]))
+        self.board.doMove(Move(self.board.figures[6], [-2, -2]))
+        self.board.doMove(Move(self.board.figures[19], [-1, -2]))
 
         self.assertTrue(self.board.isSolid())
 
@@ -255,6 +263,7 @@ class TestFigureMethods(unittest.TestCase):
                 randMove = moves[int(rand.random() * len(moves))]
             else: break
             self.board.doMove(randMove)
+            self.assertTrue(self.board.isSolid())
             # self.board.print()
 
     if __name__ == '__main__':
