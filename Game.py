@@ -1,5 +1,5 @@
-from Figure import *
 from Board import *
+from HistorySaver import *
 
 import random as rand
 import threading
@@ -65,13 +65,16 @@ class Game:
     def gameOver(self):
         return self.desk.isQueenSurrounded(Color.WHITE) or self.desk.isQueenSurrounded(Color.BLACK)
 
+
 def play():
     success=0
+    saver = HistorySaver()
     while success < 1:
         game = Game()
         try:
             game.start()
             print("Победитель:{0}".format(game.winner.name))
+            saver.saveHistoryToFile(game.history, "games")
             success += 1
         except Exception as e:
             print(str(e))
