@@ -1,12 +1,13 @@
 from Board import *
 from HistorySaver import *
+from RandomPlayer import *
 
 import random as rand
 import threading
 import time
 
 class Game:
-    def __init__(self):
+    def __init__(self, white_player, black_player):
         self.whiteQueen = Queen(Color.WHITE)
         self.blackQueen = Queen(Color.BLACK)
         figures = [self.whiteQueen, self.blackQueen]
@@ -21,25 +22,21 @@ class Game:
         self.desk = Board(figures)
         self.winner = None
         self.steps = 0
+        white_player.color = Color.WHITE
+        black_player.color = Color.BLACK
+        self.players = [white_player, black_player]
         self.history = []
 
     def start(self):
         curColor = Color.BLACK
         self.steps = 1
-        moves = []
         while not self.gameOver():
             curColor = Color.WHITE if curColor == Color.BLACK else Color.BLACK
 
-            moves = self.desk.getAllMoves(curColor)
-            # print("{0} ход:".format(self.steps))
-            if len(moves) == 0: continue
-            # print(len(moves))
-            # for move in moves:
-            #     move.print()
-            randMove = moves[int(rand.random() * len(moves))]
-            # randMove.print()
-            self.desk.doMove(randMove)
-            self.history += [randMove]
+            move = self.players[curColor.value].getMove(self.desk)
+            move.print()
+            self.desk.doMove(move)
+            self.history += [move]
             self.steps += 1
 
             # self.desk.print()
@@ -70,11 +67,13 @@ def play():
     success=0
     saver = HistorySaver()
     while success < 1:
-        game = Game()
+        white_player = RandomPlayer()
+        black_player = RandomPlayer()
+        game = Game(white_player, black_player)
         try:
             game.start()
             print("Победитель:{0}".format(game.winner.name))
-            saver.saveHistoryToFile(game.history, "games")
+            # saver.saveHistoryToFile(game.history, "games2")
             success += 1
         except Exception as e:
             print(str(e))
@@ -92,21 +91,15 @@ if __name__ == "__main__":
     t4 = threading.Thread(target=play)
 
     t1.start()
-    t2.start()
-    t3.start()
-    t4.start()
+    # t2.start()
+    # t3.start()
+    # t4.start()
 
     t1.join()
-    t2.join()
-    t3.join()
-    t4.join()
+    # t2.join()
+    # t3.join()
+    # t4.join()
 
     end = time.time()
 
     print("Время: {0}".format(end - start))
-
-
-
-
-
-

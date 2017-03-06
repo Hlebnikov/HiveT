@@ -277,9 +277,6 @@ class TestFigureMethods(unittest.TestCase):
             self.assertTrue(self.board.isSolid())
             # self.board.print()
 
-    def test_saveHistory(self):
-        move = Move(Ant(), [0, 0])
-        history = [move]
 
     if __name__ == '__main__':
         unittest.main()

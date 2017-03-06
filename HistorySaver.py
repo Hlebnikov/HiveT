@@ -3,7 +3,7 @@ from Figure import *
 class HistorySaver:
 
     def saveHistoryToFile(self, history, file_name):
-        with open("./saves/"+file_name, 'w') as f:
+        with open("./saves/"+file_name, 'a') as f:
             for move in history:
                 f.write(self.stringFromMove(move))
             f.write(".\n")
