@@ -1,35 +1,21 @@
 import unittest
 from Figure import *
 from Board import *
+from GameParser import *
 import random as rand
 
 
 class TestFigureMethods(unittest.TestCase):
 
     def setUp(self):
-        self.figure = Queen(Color.WHITE)
-
-        self.whiteQueen = Queen(Color.WHITE)
-        self.blackQueen = Queen(Color.BLACK)
-        figures = [self.whiteQueen, self.blackQueen]
-        figures += [Ant(Color.WHITE), Ant(Color.WHITE), Ant(Color.WHITE), #2
-                    Ant(Color.BLACK), Ant(Color.BLACK), Ant(Color.BLACK)] #5
-        figures += [Grasshoper(Color.WHITE), Spider(Color.WHITE), Spider(Color.WHITE), #8
-                    Grasshoper(Color.BLACK), Grasshoper(Color.BLACK), Grasshoper(Color.BLACK)] #11
-        figures += [Spider(Color.WHITE), Spider(Color.WHITE), #14
-                    Spider(Color.BLACK), Spider(Color.BLACK)] #16
-        figures += [Bug(Color.WHITE), Bug(Color.WHITE), #18
-                    Bug(Color.BLACK), Bug(Color.BLACK)] #20
-
-        self.board = Board(figures)
+        self.board = Board()
+        self.whiteQueen = self.board.whiteQueen
+        self.blackQueen = self.board.blackQueen
 
     def test_nearests2(self):
-        self.figure.coord = [2, 3]
+        self.board.setFigure(self.board.figures[0], [2, 3])
         expected = [[2, 4], [3, 3], [3, 2], [2, 2], [1, 3], [1, 4]]
-        self.assertEqual(self.figure.nearests(), expected)
-
-    def test_nearests(self):
-        self.assertTrue(self.figure.nearests() == [])
+        self.assertEqual(self.board.figures[0].nearests(), expected)
 
     def test_getBoundary(self):
         self.assertTrue(self.board.getBoundary() == [[0, 0]])
@@ -38,9 +24,6 @@ class TestFigureMethods(unittest.TestCase):
         self.board.setFigure(self.board.figures[18], [0, 1])
         self.assertCountEqual(self.board.getBoundary(), [[-1, 2], [0, 2], [1, 1], [1, 0], [1, -1], [0, -1], [-1, 0], [-1, 1]])
 
-        # moves = self.board.getAllMoves(Color.WHITE)
-        # for move in moves:
-        #     move.print()
 
     def test_noSolid(self):
         self.board.setFigure(self.board.figures[0], [0, 0])
@@ -63,7 +46,7 @@ class TestFigureMethods(unittest.TestCase):
         self.board.setFigure(self.board.figures[4], [-3, 2])
         self.board.setFigure(self.board.figures[5], [-4, 3])
         self.board.setFigure(self.board.figures[18], [-4, 3])
-        self.board.doMove(Move(self.board.figures[18], [-3, 2]))
+        # self.board.doMove(Move(self.board.figures[18], [-3, 2]))
         self.assertTrue(self.board.isSolid())
 
     def test_solid2(self):
@@ -103,7 +86,7 @@ class TestFigureMethods(unittest.TestCase):
         self.board.setFigure(self.board.figures[2], [-1, 0])
         self.board.setFigure(self.board.figures[18], [-1, 0])
 
-        self.assertEqual(self.board.figuresOnBoard(), 3)
+        self.assertEqual(self.board.figuresOnBoard(), 4)
 
     def test_getMoves(self):
         self.board.setFigure(self.board.figures[0], [0, 0])
@@ -276,6 +259,29 @@ class TestFigureMethods(unittest.TestCase):
             self.board.doMove(randMove)
             self.assertTrue(self.board.isSolid())
             # self.board.print()
+
+    def test_countBugs(self):
+        self.board.setFigure(self.board.figures[4], [1, -2])
+        self.board.setFigure(self.board.figures[5], [0, -2])
+        self.board.setFigure(self.board.figures[18], [0, -2])
+        self.assertEqual(self.board.figuresOnBoard(), 3)
+        self.assertTrue(self.board.isSolid())
+
+    def test_game_parser(self):
+        self.board.setFigure(self.board.figures[1], [1, -2])
+        self.board.setFigure(self.board.figures[0], [0, -2])
+        self.board.setFigure(self.board.figures[18], [-1, -2])
+        parser = GameParser([self.board], Color.WHITE)
+        features = parser.getFeatures()
+        n = [0] * 10
+        Qn = n.copy()
+        Qn[5] = 1
+        Qn[4] = 1
+        Bn = n.copy()
+        Bn[0] = 1
+        qn = Bn
+        n = Qn + qn + [0] * 160 + Bn + [0] * 30
+        self.assertCountEqual(features, [2, 1, 1, 0, 2, 1] + n)
 
 
     if __name__ == '__main__':

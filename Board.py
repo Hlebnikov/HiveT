@@ -5,12 +5,25 @@ h = 35
 
 
 class Board:
-    def __init__(self, figures=[]):
+    def __init__(self):
+
+        self.whiteQueen = Queen(Color.WHITE)
+        self.blackQueen = Queen(Color.BLACK)
+        figures = [self.whiteQueen, self.blackQueen]
+        figures += [Ant(Color.WHITE), Ant(Color.WHITE), Ant(Color.WHITE),
+                    Ant(Color.BLACK), Ant(Color.BLACK), Ant(Color.BLACK)]
+        figures += [Grasshoper(Color.WHITE), Grasshoper(Color.WHITE), Grasshoper(Color.WHITE),
+                    Grasshoper(Color.BLACK), Grasshoper(Color.BLACK), Grasshoper(Color.BLACK)]
+        figures += [Spider(Color.WHITE), Spider(Color.WHITE),
+                    Spider(Color.BLACK), Spider(Color.BLACK)]
+        figures += [Bug(Color.WHITE), Bug(Color.WHITE),
+                    Bug(Color.BLACK), Bug(Color.BLACK)]
+
         self.x0 = w // 2
         self.y0 = h // 2
         self.figures = figures
         self.fields = [[None for x in range(w)] for y in range(h)]
-        self.levelsCount = 0
+        # self.levelsCount = 0
         for figure in figures:
             if isinstance(figure, Queen):
                 if figure.color == Color.WHITE:
@@ -69,6 +82,58 @@ class Board:
         self.pullOffFigureAt(move.from_coord)
         self.setFigure(move.figure, move.to_coord)
 
+    def doMoveFromString(self, string):
+        string = string.replace("\n", "")
+        splitLine = string.split(" ")
+        f = splitLine[0]
+        if f == "Q":
+            figureClass = Queen
+            color = Color.WHITE
+        elif f == "q":
+            figureClass = Queen
+            color = Color.BLACK
+        elif f == "A":
+            figureClass = Ant
+            color = Color.WHITE
+        elif f == "a":
+            figureClass = Ant
+            color = Color.BLACK
+        elif f == "S":
+            figureClass = Spider
+            color = Color.WHITE
+        elif f == "s":
+            figureClass = Spider
+            color = Color.BLACK
+        elif f == "G":
+            figureClass = Grasshoper
+            color = Color.WHITE
+        elif f == "g":
+            figureClass = Grasshoper
+            color = Color.BLACK
+        elif f == "B":
+            figureClass = Bug
+            color = Color.WHITE
+        elif f == "b":
+            figureClass = Bug
+            color = Color.BLACK
+        else:
+            raise Exception("Unknown figure letter")
+
+        to_coord = [int(splitLine[1]), int(splitLine[2])]
+
+        if splitLine[3] == "N":
+            from_coord = None
+        else:
+            from_coord = [int(splitLine[3]), int(splitLine[4])]
+
+        for figure in self.figures:
+            if isinstance(figure, figureClass) and figure.color == color and figure.coord == from_coord:
+                concreteFigure = figure
+
+        move = Move(concreteFigure, to_coord)
+        # print(move)
+        self.doMove(move)
+
     def figureAt(self, coord):
         if coord is None: return None
         x = self.x0 + coord[0]
@@ -114,14 +179,17 @@ class Board:
         # self.print()
 
         T = []
+        i = 0
         rightCount = self.figuresOnBoard()
         for f in self.figures:
-            if f.coord and not f.underBug:
+            if f.coord:
                 T = [f]
                 break
+        if rightCount > 0:
+            if isinstance(T[0], Bug) and self.figureAt(T[0].coord) != T[0]:
+                T[0] = self.figureAt(T[0].coord)
         # print("rightCount: {0}".format(rightCount))
         Q = set()
-        i = 0
         while len(T) > 0:
             Q.add(T[0])
             # print("step ", i)
@@ -137,6 +205,7 @@ class Board:
                     Q.add(fig)
             T.pop(0)
             i += 1
+            i += f.countBugs()
         #     print()
         # print("stoped")
         # print(rightCount, i)
@@ -157,7 +226,7 @@ class Board:
     def figuresOnBoard(self, color=None):
         i = 0
         for figure in self.figures:
-            if figure.coord and not figure.underBug:
+            if figure.coord:
                 if color:
                     if figure.color == color:
                         i += 1

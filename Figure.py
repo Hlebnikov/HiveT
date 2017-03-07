@@ -5,9 +5,14 @@ class Color(Enum):
     WHITE = 0
     BLACK = 1
 
+    def inverse(self):
+        if self == Color.WHITE:
+            return Color.BLACK
+        else:
+            return Color.WHITE
+
 
 class Move:
-
     def __init__(self, figure, to_coord):
         self.figure = figure
         self.to_coord = to_coord
@@ -56,6 +61,14 @@ class Figure:
         while t.underBug:
             t = t.underBug
         print(t.letter, end="")
+
+    def countBugs(self):
+        t = self
+        i = 0
+        while t.underBug:
+            i += 1
+            t = t.underBug
+        return i
 
     def getMoves(self, board, onlySets = False):
         out = []
@@ -208,17 +221,14 @@ class Bug(Figure):
 
         if self.underBug:
             return out
-
         if self.coord and board.figureAt(self.coord) != self:
             nearests = self.nearests()
             for field in nearests:
                 to_coord = [field[0], field[1]]
                 out += [Move(self, to_coord)]
             return out
-
         if not self.canBePullOffFromBoard(board):
             return []
-
         nearests = self.nearests()
         if len(nearests) > 0 and not onlySets:
             for field in nearests:
