@@ -1,6 +1,7 @@
 from Board import *
 from HistorySaver import *
 from RandomPlayer import *
+from GameParser import *
 
 import threading
 import time
@@ -15,16 +16,15 @@ class Game:
         black_player.color = Color.BLACK
         self.players = [white_player, black_player]
         self.history = []
+        self.curColor = Color.WHITE
 
     def start(self):
-        curColor = Color.BLACK
+        self.curColor = Color.BLACK
         self.steps = 1
-        while not self.gameOver():
-            curColor = Color.WHITE if curColor == Color.BLACK else Color.BLACK
+        while not self.is_over():
 
-            move = self.players[curColor.value].getMove(self.desk)
             # move.print()
-            self.desk.doMove(move)
+            move = self.next_step()
             self.history += [move]
             self.steps += 1
 
@@ -48,21 +48,31 @@ class Game:
         for move in self.history:
             move.print()
 
-    def gameOver(self):
+    def is_over(self):
         return self.desk.isQueenSurrounded(Color.WHITE) or self.desk.isQueenSurrounded(Color.BLACK)
 
+    def extract_features(self):
+        game_parser = GameParser()
+        return game_parser.getFeaturesForState(self.desk)
+        pass
+
+    def next_step(self):
+        self.curColor = Color.WHITE if self.curColor == Color.BLACK else Color.BLACK
+        move = self.players[self.curColor.value].getMove(self.desk)
+        self.desk.doMove(move)
+        return move
 
 def play():
     success=0
     saver = HistorySaver()
-    while success < 1:
+    while success < 3000:
         white_player = RandomPlayer()
         black_player = RandomPlayer()
         game = Game(white_player, black_player)
         try:
             game.start()
             print("Победитель:{0}".format(game.winner.name))
-            # saver.saveHistoryToFile(game.history, "games2")
+            saver.saveHistoryToFile(game.history, "games")
             success += 1
         except Exception as e:
             print(str(e))
@@ -91,9 +101,9 @@ def playFromFile(file):
 
 if __name__ == "__main__":
     start = time.time()
-    # play()
+    play()
 
-    playFromFile("./saves/games2")
+    # playFromFile("./saves/games2")
     # t1 = threading.Thread(target=play)
     # t1.start()
     # t1.join()

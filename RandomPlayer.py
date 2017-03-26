@@ -5,6 +5,7 @@ class RandomPlayer:
 
     def __init__(self):
         self.color = Color.WHITE
+        self.name = "Randy"
 
     def getMove(self, board):
         moves = board.getAllMoves(self.color)
