@@ -7,8 +7,11 @@ import tensorflow as tf
 
 from Game import *
 from RandomPlayer import *
+from TDPlayer import *
+from Figure import *
 
 import time
+
 
 # from backgammon.game import Game
 # from backgammon.agents.human_agent import HumanAgent
@@ -21,11 +24,13 @@ def weight_bias(shape):
     b = tf.Variable(tf.constant(0.1, shape=shape[-1:]), name='bias')
     return W, b
 
+
 # helper to create a dense, fully-connected layer
 def dense_layer(x, shape, activation, name):
     with tf.variable_scope(name):
         W, b = weight_bias(shape)
         return activation(tf.matmul(x, W) + b, name='activation')
+
 
 class Model(object):
     def __init__(self, sess, model_path, summary_path, checkpoint_path, restore=False):
@@ -39,18 +44,18 @@ class Model(object):
 
         # lambda decay
         lamda = tf.maximum(0.7, tf.train.exponential_decay(0.9, self.global_step, \
-            30000, 0.96, staircase=True), name='lambda')
+                                                           30000, 0.96, staircase=True), name='lambda')
 
         # learning rate decay
-        alpha = tf.maximum(0.01, tf.train.exponential_decay(0.5, self.global_step, \
-            40000, 0.96, staircase=True), name='alpha')
+        alpha = tf.maximum(0.01, tf.train.exponential_decay(0.1, self.global_step, \
+                                                            40000, 0.96, staircase=True), name='alpha')
 
         tf.summary.scalar('lambda', lamda)
         tf.summary.scalar('alpha', alpha)
 
         # describe network size
         layer_size_input = 248
-        layer_size_hidden = 30
+        layer_size_hidden = 10
         layer_size_output = 1
 
         # placeholders for input and target output
@@ -58,8 +63,8 @@ class Model(object):
         self.V_next = tf.placeholder('float', [1, layer_size_output], name='V_next')
 
         # build network arch. (just 2 layers with sigmoid activation)
-        prev_y = dense_layer(self.x, [layer_size_input, layer_size_hidden], tf.sigmoid, name='layer1')
-        self.V = dense_layer(prev_y, [layer_size_hidden, layer_size_output], tf.sigmoid, name='layer2')
+        prev_y = dense_layer(self.x, [layer_size_input, layer_size_hidden], tf.tanh, name='layer1')
+        self.V = dense_layer(prev_y, [layer_size_hidden, layer_size_output], tf.tanh, name='layer2')
 
         # watch the individual value predictions over time
         tf.summary.scalar('V_next', tf.reduce_sum(self.V_next))
@@ -72,7 +77,8 @@ class Model(object):
         loss_op = tf.reduce_mean(tf.square(self.V_next - self.V), name='loss')
 
         # check if the model predicts the correct state
-        accuracy_op = tf.reduce_sum(tf.cast(tf.equal(tf.round(self.V_next), tf.round(self.V)), dtype='float'), name='accuracy')
+        accuracy_op = tf.reduce_sum(tf.cast(tf.equal(tf.round(self.V_next), tf.round(self.V)), dtype='float'),
+                                    name='accuracy')
 
         # track the number of steps and average loss for the current game
         with tf.variable_scope('game'):
@@ -99,6 +105,7 @@ class Model(object):
             delta_avg_ema_op = delta_avg_ema.apply([delta_avg_op])
             accuracy_avg_ema_op = accuracy_avg_ema.apply([accuracy_avg_op])
 
+            tf.summary.scalar('game/loss_sum_op', loss_sum_op)
             tf.summary.scalar('game/loss_avg', loss_avg_op)
             tf.summary.scalar('game/delta_avg', delta_avg_op)
             tf.summary.scalar('game/accuracy_avg', accuracy_avg_op)
@@ -181,23 +188,32 @@ class Model(object):
     #     game = Game.new()
     #     game.play([TDAgent(Game.TOKENS[0], self), HumanAgent(Game.TOKENS[1])], draw=True)
     #
-    # def test(self, episodes=100, draw=False):
-    #     players = [TDAgent(Game.TOKENS[0], self), RandomAgent(Game.TOKENS[1])]
-    #     winners = [0, 0]
-    #     for episode in range(episodes):
-    #         game = Game.new()
-    #
-    #         winner = game.play(players, draw=draw)
-    #         winners[winner] += 1
-    #
-    #         winners_total = sum(winners)
-    #         print("[Episode %d] %s (%s) vs %s (%s) %d:%d of %d games (%.2f%%)" % (episode, \
-    #             players[0].name, players[0].player, \
-    #             players[1].name, players[1].player, \
-    #             winners[0], winners[1], winners_total, \
-    #             (winners[0] / winners_total) * 100.0))
+    def test(self, episodes=100, draw=False):
+        # players = [TDAgent(Game.TOKENS[0], self), RandomAgent(Game.TOKENS[1])]
+        white_player = TDAgent(self)
+        black_player = RandomPlayer()
+        winners = [0, 0]
+        for episode in range(episodes):
+            game = Game(white_player, black_player)
+
+            try:
+                game.start()
+            except Exception as e:
+                print("ой")
+                continue
+
+            winner = game.winner
+            winners[winner.value] += 1
+
+            winners_total = sum(winners)
+            print("[Episode %d] %s vs %s  %d:%d of %d games (%.2f%%)" % (episode,
+                                                                         white_player.name,
+                                                                         black_player.name,
+                                                                         winners[0], winners[1], winners_total,
+                                                                         (winners[0] / winners_total) * 100.0))
 
     def train(self):
+        print("train")
         tf.train.write_graph(self.sess.graph, self.model_path, 'hive.pb', as_text=False)
         summary_writer = tf.summary.FileWriter('{0}{1}'.format(self.summary_path, int(time.time())), self.sess.graph)
 
@@ -207,91 +223,92 @@ class Model(object):
 
         # players = [TDAgent(Game.TOKENS[0], self), TDAgent(Game.TOKENS[1], self)]
 
-        # validation_interval = 1000
-        episodes = 1
-        games = 250
+        validation_interval = 1000
+        games = 5000
         start = time.time()
-        for episode in range(episodes):
-            # if episode != 0 and episode % validation_interval == 0:
-            #     self.test(episodes=100)
-            print("episode", episode)
-            game = Game(white_player, black_player)
-            # player_num = random.randint(0, 1)
 
-            x = game.extract_features()
+        game = Game(white_player, black_player)
 
-            winner = 0
-            file = "./saves/games2"
-            with open(file, "r") as f:
-                line = f.readline()
-                n_game = 0
-                while line and n_game < games:
-                    board = Board()
-                    game_step = 0
-                    while line != ".\n":
-                        # print(line)
-                        board.doMoveFromString(line)
+        x = game.extract_features()
 
-                        x_next = GameParser.getFeaturesForState(board)
-                        V_next = self.get_output(x_next)
-                        # print(x_next, V_next)
-                        self.sess.run(self.train_op, feed_dict={self.x: x, self.V_next: V_next})
+        winner = 0
+        file = "./saves/games"
+        with open(file, "r") as f:
+            line = f.readline()
+            n_game = 0
+            while line and n_game < games:
+                if n_game != 0 and n_game % validation_interval == 0:
+                    self.test(episodes=10)
+                board = Board()
+                game_step = 0
+                while line != ".\n":
+                    # print(line)
+                    board.doMoveFromString(line)
 
-                        x = x_next
-                        game_step += 1
-                        # board.print()
-                        line = f.readline()
+                    x_next = GameParser.getFeaturesForState(board)
+                    V_next = self.get_output(x_next)
+                    # print(x_next, V_next)
+                    self.sess.run(self.train_op, feed_dict={self.x: x, self.V_next: V_next})
 
-                    n_game += 1
-                    print("     game: ", game_step)
-                    if board.isQueenSurrounded(Color.WHITE):
-                        winner = 0
-                    else:
-                        winner = 1
+                    x = x_next
+                    game_step += 1
+                    # board.print()
                     line = f.readline()
+                n_game += 1
+                line = f.readline()
 
-                    _, global_step, summaries, _ = self.sess.run([
-                        self.train_op,
-                        self.global_step,
-                        self.summaries_op,
-                        self.reset_op
-                    ], feed_dict={self.x: x, self.V_next: np.array([[winner]], dtype='float')})
-                    summary_writer.add_summary(summaries, global_step=global_step)
+                if board.isQueenSurrounded(Color.WHITE):
+                    winner = Color.BLACK
+                else:
+                    winner = Color.WHITE
 
-            # print("Game %d/%d (Winner: %s) in %d turns" % (episode, episodes, players[winner].player, game_step))
-                    self.saver.save(self.sess, self.checkpoint_path + 'checkpoint', global_step=global_step)
+                _, global_step, summaries, _ = self.sess.run([
+                    self.train_op,
+                    self.global_step,
+                    self.summaries_op,
+                    self.reset_op
+                ], feed_dict={self.x: x, self.V_next: np.array([[0 if winner == Color.BLACK else 1]], dtype='float')})
+                summary_writer.add_summary(summaries, global_step=global_step)
+
+                print("Game %d/%d in %d turns" % (n_game, games, game_step))
+                self.saver.save(self.sess, self.checkpoint_path + 'checkpoint', global_step=global_step)
 
         summary_writer.close()
 
-        # self.test(episodes=10)
+        self.test(episodes=10)
         print("time:", time.time() - start)
 
     def trainTD(self):
-        tf.train.write_graph(self.sess.graph, self.model_path, 'td_gammon.pb', as_text=False)
-        summary_writer = tf.summary.FileWriter(self.summary_path, self.sess.graph)
+        print("TD train")
+        tf.train.write_graph(self.sess.graph, self.model_path, 'hive.pb', as_text=False)
+        summary_writer = tf.summary.FileWriter('{0}{1}'.format(self.summary_path, int(time.time())), self.sess.graph)
 
         # the agent plays against itself, making the best move for each player
-        white_player = RandomPlayer()
+        white_player = TDAgent(self)
         black_player = RandomPlayer()
 
-        # players = [TDAgent(Game.TOKENS[0], self), TDAgent(Game.TOKENS[1], self)]
-
-        # validation_interval = 1000
-        episodes = 1
+        validation_interval = 1000
+        episodes = 10
         start = time.time()
         for episode in range(episodes):
-            # if episode != 0 and episode % validation_interval == 0:
-            #     self.test(episodes=100)
-            print("episode", episode)
+            if episode != 0 and episode % validation_interval == 0:
+                self.test(episodes=100)
             game = Game(white_player, black_player)
-            # player_num = random.randint(0, 1)
 
             x = game.extract_features()
             game_step = 0
+            game.curColor = Color.BLACK
+
             while not game.is_over():
-                game.curColor = Color.BLACK
-                game.next_step()
-                # player_num = (player_num + 1) % 2
+                if game_step > 450:
+                    print("More 450")
+                    break
+                try:
+                    game.next_step()
+                except Exception as e:
+                    game.desk.print()
+                    print("Fail")
+                    break
 
                 x_next = game.extract_features()
                 V_next = self.get_output(x_next)
@@ -299,21 +316,19 @@ class Model(object):
 
                 x = x_next
                 game_step += 1
+            else:
+                _, global_step, summaries, _ = self.sess.run([
+                    self.train_op,
+                    self.global_step,
+                    self.summaries_op,
+                    self.reset_op
+                ], feed_dict={self.x: x,
+                              self.V_next: np.array([[0 if game.winner == Color.BLACK else 1]], dtype='float')})
+                summary_writer.add_summary(summaries, global_step=global_step)
 
-            winner = game.winner
-
-            _, global_step, summaries, _ = self.sess.run([
-                self.train_op,
-                self.global_step,
-                self.summaries_op,
-                self.reset_op
-            ], feed_dict={self.x: x, self.V_next: np.array([[winner]], dtype='float')})
-            summary_writer.add_summary(summaries, global_step=global_step)
-
-
-            # print("Game %d/%d (Winner: %s) in %d turns" % (episode, episodes, players[winner].player, game_step))
-            self.saver.save(self.sess, self.checkpoint_path + 'checkpoint', global_step=global_step)
+                print("Game %d/%d (Winner: %s) in %d turns" % (episode, episodes, game.winner.name, game_step))
+                self.saver.save(self.sess, self.checkpoint_path + 'checkpoint', global_step=global_step)
         summary_writer.close()
 
-        # self.test(episodes=10)
+        self.test(episodes=10)
         print("time:", time.time() - start)

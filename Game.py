@@ -22,21 +22,23 @@ class Game:
         self.curColor = Color.BLACK
         self.steps = 1
         while not self.is_over():
+            # print("="*25)
 
-            # move.print()
             move = self.next_step()
-            self.history += [move]
-            self.steps += 1
+            if move:
+                # move.print()
+                self.history += [move]
+                self.steps += 1
 
             # self.desk.print()
 
             if not self.desk.isSolid():
-                # self.desk.print()
-                # print(self.desk.figuresOnBoard())
+                self.desk.print()
+                print(self.desk.figuresOnBoard())
                 raise Exception("Hive not solid!")
 
-            if self.steps > 200:
-                raise Exception("Слишком долго")
+            # if self.steps > 200:
+            #     raise Exception("Слишком долго")
         print("Ходов", self.steps, end=" ")
 
         if self.desk.isQueenSurrounded(Color.WHITE):
@@ -44,12 +46,19 @@ class Game:
         else:
             self.winner = Color.WHITE
 
+
     def printHistory(self):
         for move in self.history:
             move.print()
 
     def is_over(self):
-        return self.desk.isQueenSurrounded(Color.WHITE) or self.desk.isQueenSurrounded(Color.BLACK)
+        if self.desk.isQueenSurrounded(Color.WHITE) or self.desk.isQueenSurrounded(Color.BLACK):
+            if self.desk.isQueenSurrounded(Color.WHITE):
+                self.winner = Color.BLACK
+            else:
+                self.winner = Color.WHITE
+            return True
+        return False
 
     def extract_features(self):
         game_parser = GameParser()
@@ -57,26 +66,33 @@ class Game:
         pass
 
     def next_step(self):
-        self.curColor = Color.WHITE if self.curColor == Color.BLACK else Color.BLACK
+        self.curColor = self.curColor.inverse()
         move = self.players[self.curColor.value].getMove(self.desk)
-        self.desk.doMove(move)
+        if move:
+            self.desk.doMove(move)
+        else:
+            self.board.print()
+            raise Exception("Нет ходов :(")
+            move = self.next_step()
         return move
 
+
 def play():
-    success=0
+    success = 0
     saver = HistorySaver()
-    while success < 3000:
+    while success < 5000:
         white_player = RandomPlayer()
         black_player = RandomPlayer()
         game = Game(white_player, black_player)
         try:
             game.start()
-            print("Победитель:{0}".format(game.winner.name))
-            saver.saveHistoryToFile(game.history, "games")
             success += 1
+            print("{0} Победитель:{1}".format(success, game.winner.name))
+            saver.saveHistoryToFile(game.history, "games")
         except Exception as e:
-            print(str(e))
+            # print(str(e))
             pass
+
 
 def playFromFile(file):
     games = 0
@@ -101,21 +117,21 @@ def playFromFile(file):
 
 if __name__ == "__main__":
     start = time.time()
-    play()
+    # play()
 
     # playFromFile("./saves/games2")
-    # t1 = threading.Thread(target=play)
-    # t1.start()
-    # t1.join()
+    t1 = threading.Thread(target=play)
+    t1.start()
+    t1.join()
 
     # t2 = threading.Thread(target=play)
     # t3 = threading.Thread(target=play)
     # t4 = threading.Thread(target=play)
-
+    #
     # t2.start()
     # t3.start()
     # t4.start()
-
+    #
     # t2.join()
     # t3.join()
     # t4.join()

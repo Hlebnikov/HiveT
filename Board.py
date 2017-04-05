@@ -1,7 +1,7 @@
 from Figure import *
 
-w = 35
-h = 35
+w = 25
+h = 25
 
 
 class Board:
@@ -9,15 +9,15 @@ class Board:
 
         self.whiteQueen = Queen(Color.WHITE)
         self.blackQueen = Queen(Color.BLACK)
-        figures = [self.whiteQueen, self.blackQueen]
-        figures += [Ant(Color.WHITE), Ant(Color.WHITE), Ant(Color.WHITE),
-                    Ant(Color.BLACK), Ant(Color.BLACK), Ant(Color.BLACK)]
-        figures += [Grasshoper(Color.WHITE), Grasshoper(Color.WHITE), Grasshoper(Color.WHITE),
-                    Grasshoper(Color.BLACK), Grasshoper(Color.BLACK), Grasshoper(Color.BLACK)]
-        figures += [Spider(Color.WHITE), Spider(Color.WHITE),
-                    Spider(Color.BLACK), Spider(Color.BLACK)]
-        figures += [Bug(Color.WHITE), Bug(Color.WHITE),
-                    Bug(Color.BLACK), Bug(Color.BLACK)]
+        figures = [self.whiteQueen, self.blackQueen]  # 0
+        figures += [Ant(Color.WHITE), Ant(Color.WHITE), Ant(Color.WHITE),  # 2
+                    Ant(Color.BLACK), Ant(Color.BLACK), Ant(Color.BLACK)]  # 5
+        figures += [Grasshoper(Color.WHITE), Grasshoper(Color.WHITE), Grasshoper(Color.WHITE),  # 8
+                    Grasshoper(Color.BLACK), Grasshoper(Color.BLACK), Grasshoper(Color.BLACK)] # 11
+        figures += [Spider(Color.WHITE), Spider(Color.WHITE),  # 14
+                    Spider(Color.BLACK), Spider(Color.BLACK)]  # 16
+        figures += [Bug(Color.WHITE), Bug(Color.WHITE),  # 18
+                    Bug(Color.BLACK), Bug(Color.BLACK)]  # 20
 
         self.x0 = w // 2
         self.y0 = h // 2
@@ -30,6 +30,9 @@ class Board:
                     self.whiteQueen = figure
                 else:
                     self.blackQueen = figure
+
+    # def __copy__(self):
+
 
     def print(self):
         for j in range(h):
@@ -64,23 +67,32 @@ class Board:
         self.fields[x][y] = figure
 
     def pullOffFigureAt(self, coord):
-        if coord is None: return
+        if coord is None:
+            return
+
         x = self.x0 + coord[0]
         y = self.y0 + coord[1]
         f = self.fields[x][y]
-        if f:
-            f.coord = None
-        self.fields[x][y] = None
 
-    def doMove(self, move):
-        if isinstance(move.figure, Bug):
-            f = self.figureAt(move.from_coord)
-            if f and f.underBug:
+        if f:
+            if f.underBug:
                 f.pullOffBug()
                 return
 
-        self.pullOffFigureAt(move.from_coord)
+            f.coord = None
+            self.fields[x][y] = None
+
+    def doMove(self, move):
+        try:
+            self.pullOffFigureAt(move.from_coord)
+        except:
+            move.print()
+            raise Exception("oops")
         self.setFigure(move.figure, move.to_coord)
+
+    def undoMove(self, move):
+        back_move = Move(move.figure, move.from_coord)
+        self.doMove(back_move)
 
     def doMoveFromString(self, string):
         string = string.replace("\n", "")
@@ -127,15 +139,22 @@ class Board:
             from_coord = [int(splitLine[3]), int(splitLine[4])]
 
         for figure in self.figures:
-            if isinstance(figure, figureClass) and figure.color == color and figure.coord == from_coord:
+            if isinstance(figure, figureClass) and \
+                            figure.color == color and \
+                            figure.coord == from_coord and \
+                            figure.underBug is None:
                 concreteFigure = figure
+                break
+        else:
+            raise Exception("Wrong move", string)
 
         move = Move(concreteFigure, to_coord)
         # print(move)
         self.doMove(move)
 
     def figureAt(self, coord):
-        if coord is None: return None
+        if coord is None:
+            return None
         x = self.x0 + coord[0]
         y = self.y0 + coord[1]
         return self.fields[x][y]
@@ -206,7 +225,7 @@ class Board:
             T.pop(0)
             i += 1
             i += f.countBugs()
-        #     print()
+            # print()
         # print("stoped")
         # print(rightCount, i)
         return rightCount == i

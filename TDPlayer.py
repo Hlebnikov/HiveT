@@ -1,5 +1,6 @@
 from Board import *
 from GameParser import GameParser
+import copy
 
 class TDAgent(object):
 
@@ -17,16 +18,14 @@ class TDAgent(object):
         a_best = None
 
         all_moves = board.getAllMoves(self.color)
-
         for a in all_moves:
-            t_board = board
-            # ateList = desk.take_action(a, self.player)
-            t_board.doMove(a)
-            features = GameParser.getFeaturesForState(t_board)
+            board.doMove(a)
+            features = GameParser.getFeaturesForState(board)
             v = self.model.get_output(features)
             v = 1. - v if self.color == Color.BLACK else v
             if v > v_best:
                 v_best = v
                 a_best = a
-            # game.undo_action(a, self.player, ateList)
+            board.undoMove(a)
+        # print(v_best)
         return a_best

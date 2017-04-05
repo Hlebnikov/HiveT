@@ -52,8 +52,9 @@ class Figure:
 
     def pullOffBug(self):
         t = self
-        while t.underBug:
+        while t.underBug and t.underBug.underBug:
             t = t.underBug
+        t.underBug.coord = None
         t.underBug = None
 
     def printBug(self):
@@ -68,6 +69,10 @@ class Figure:
         while t.underBug:
             i += 1
             t = t.underBug
+            if i > 4:
+                print(t.underBug)
+                print(t)
+                raise Exception("too more bugs")
         return i
 
     def getMoves(self, board, onlySets = False):

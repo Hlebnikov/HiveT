@@ -3,7 +3,7 @@ from Figure import *
 from Board import *
 from GameParser import *
 import random as rand
-
+from GameParser import *
 
 class TestFigureMethods(unittest.TestCase):
 
@@ -267,22 +267,72 @@ class TestFigureMethods(unittest.TestCase):
         self.assertEqual(self.board.figuresOnBoard(), 3)
         self.assertTrue(self.board.isSolid())
 
-    def test_game_parser(self):
-        self.board.setFigure(self.board.figures[1], [1, -2])
-        self.board.setFigure(self.board.figures[0], [0, -2])
-        self.board.setFigure(self.board.figures[18], [-1, -2])
-        parser = GameParser([self.board], Color.WHITE)
-        features = parser.getFeatures()
-        n = [0] * 10
-        Qn = n.copy()
-        Qn[5] = 1
-        Qn[4] = 1
-        Bn = n.copy()
-        Bn[0] = 1
-        qn = Bn
-        n = Qn + qn + [0] * 160 + Bn + [0] * 30
-        self.assertCountEqual(features, [2, 1, 1, 0, 2, 1] + n)
+    def test_countOfBlocks(self):
+        whiteAnt = self.board.figures[4]
+        blackBug = self.board.figures[20]
+        whiteBug = self.board.figures[18]
+        whiteGrass = self.board.figures[8]
+        self.board.doMove(Move(whiteAnt, [0, 0]))
+        self.board.doMove(Move(blackBug, [0, 1]))
+        self.board.doMove(Move(whiteBug, [-1, 0]))
+        self.board.doMove(Move(blackBug, [0, 0]))
+        self.board.doMove(Move(whiteGrass, [0, 1]))
+        move = Move(blackBug, [0, 1])
+        self.board.doMove(move)
+        self.board.undoMove(move)
 
+        self.board.doMove(move)
+
+        move = Move(whiteBug, [0, 0])
+        self.board.doMove(move)
+        self.board.undoMove(move)
+
+        self.board.doMove(move)
+
+        move = Move(blackBug, [0, 0])
+
+        self.board.doMove(move)
+        self.board.undoMove(move)
+
+        self.board.doMove(move)
+
+        move = Move(blackBug, [0, 1])
+
+        self.board.doMove(move)
+        self.board.undoMove(move)
+
+        self.board.doMove(move)
+
+        move = Move(whiteBug, [0, 1])
+
+        self.board.doMove(move)
+        self.board.undoMove(move)
+
+        self.board.doMove(move)
+
+        move = Move(whiteBug, [1, 0])
+
+        self.board.doMove(move)
+        self.board.undoMove(move)
+
+        self.board.doMove(move)
+
+        move = Move(blackBug, [1, 0])
+
+        self.board.doMove(move)
+        self.board.undoMove(move)
+
+        self.board.doMove(move)
+
+        blocked = countOfBlocked(self.board, Color.WHITE)
+        self.board.print()
+        # self.assertEqual(blocked, 2)
+
+    def test_color(self):
+        color = Color.WHITE
+        self.assertEqual(color.value, 1)
+        color = color.inverse()
+        self.assertEqual(color.value, 0)
 
     if __name__ == '__main__':
         unittest.main()

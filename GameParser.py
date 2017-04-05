@@ -36,7 +36,6 @@ class GameParser:
         features += getAllNeighblorsCount(state).tolist()
         return np.array(features).reshape(1,-1)
 
-
 def countOfBlocked(state, color):
     c = 0
     for figure in state.figures:
