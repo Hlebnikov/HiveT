@@ -21,6 +21,13 @@ class Move:
     def print(self):
         print("F: {0} to: {1} from: {2}".format(self.figure.letter, self.to_coord, self.from_coord))
 
+    def toString(self):
+        from_x = "N" if not self.from_coord else self.from_coord[0]
+        from_y = "N" if not self.from_coord else self.from_coord[1]
+        return "{0} {1} {2} {3} {4}".format(self.figure.letter,
+                                            self.to_coord[0], self.to_coord[1],
+                                            from_x, from_y)
+
 adjacents = [[0, 1],
              [1, 0],
              [1, -1],
@@ -77,7 +84,8 @@ class Figure:
 
     def getMoves(self, board, onlySets = False):
         out = []
-        if self.coord: return out
+        if self.coord:
+            return out
         if board.figuresOnBoard() == 1:
             for field in board.getBoundary():
                 out += [Move(self, field)]

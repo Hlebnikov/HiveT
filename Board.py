@@ -129,6 +129,7 @@ class Board:
             figureClass = Bug
             color = Color.BLACK
         else:
+            print(string)
             raise Exception("Unknown figure letter")
 
         to_coord = [int(splitLine[1]), int(splitLine[2])]

@@ -7,7 +7,7 @@ class TDAgent(object):
     def __init__(self, model):
         self.color = None
         self.model = model
-        self.name = 'TD-Gammon'
+        self.name = 'TD-Hive'
 
     def getMove(self, board):
         """
@@ -27,5 +27,4 @@ class TDAgent(object):
                 v_best = v
                 a_best = a
             board.undoMove(a)
-        # print(v_best)
         return a_best

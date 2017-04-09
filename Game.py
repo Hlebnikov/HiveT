@@ -11,7 +11,9 @@ class Game:
         self.desk = Board()
         self.winner = None
         self.steps = 0
+        self.game_parser = GameParser()
 
+        self.was_skip_move = False
         white_player.color = Color.WHITE
         black_player.color = Color.BLACK
         self.players = [white_player, black_player]
@@ -22,8 +24,6 @@ class Game:
         self.curColor = Color.BLACK
         self.steps = 1
         while not self.is_over():
-            # print("="*25)
-
             move = self.next_step()
             if move:
                 # move.print()
@@ -41,10 +41,10 @@ class Game:
             #     raise Exception("Слишком долго")
         print("Ходов", self.steps, end=" ")
 
-        if self.desk.isQueenSurrounded(Color.WHITE):
-            self.winner = Color.BLACK
-        else:
+        if self.desk.isQueenSurrounded(Color.BLACK):
             self.winner = Color.WHITE
+        else:
+            self.winner = Color.BLACK
 
 
     def printHistory(self):
@@ -52,27 +52,31 @@ class Game:
             move.print()
 
     def is_over(self):
-        if self.desk.isQueenSurrounded(Color.WHITE) or self.desk.isQueenSurrounded(Color.BLACK):
-            if self.desk.isQueenSurrounded(Color.WHITE):
-                self.winner = Color.BLACK
-            else:
-                self.winner = Color.WHITE
+        if self.steps > 250:
+            self.winner = Color.BLACK
+            return True
+        if self.desk.isQueenSurrounded(Color.WHITE):
+            self.winner = Color.BLACK
+            return True
+        elif self.desk.isQueenSurrounded(Color.BLACK):
+            self.winner = Color.WHITE
             return True
         return False
 
     def extract_features(self):
-        game_parser = GameParser()
-        return game_parser.getFeaturesForState(self.desk)
-        pass
+        return self.game_parser.getFeaturesForState(self.desk)
 
     def next_step(self):
+        self.steps += 1
         self.curColor = self.curColor.inverse()
         move = self.players[self.curColor.value].getMove(self.desk)
         if move:
             self.desk.doMove(move)
         else:
-            self.board.print()
-            raise Exception("Нет ходов :(")
+            if self.was_skip_move:
+                self.desk.print()
+                raise Exception("Нет ходов :(")
+            self.was_skip_move = True
             move = self.next_step()
         return move
 
@@ -104,13 +108,13 @@ def playFromFile(file):
             while line != ".\n":
                 # print(line)
                 board.doMoveFromString(line)
-                # board.print()
+                board.print()
                 line = f.readline()
             games += 1
             if board.isQueenSurrounded(Color.WHITE):
-                wins[0] += 1
-            else:
                 wins[1] += 1
+            else:
+                wins[0] += 1
             line = f.readline()
     print("Played games: {0}. White wins: {1}. Black wins: {2}".format(games, wins[0], wins[1]))
 
@@ -119,10 +123,10 @@ if __name__ == "__main__":
     start = time.time()
     # play()
 
-    # playFromFile("./saves/games2")
-    t1 = threading.Thread(target=play)
-    t1.start()
-    t1.join()
+    playFromFile("./saves/righttests")
+    # t1 = threading.Thread(target=play)
+    # t1.start()
+    # t1.join()
 
     # t2 = threading.Thread(target=play)
     # t3 = threading.Thread(target=play)
